@@ -1,0 +1,3 @@
+@name1 should take 2 sips each time the next song plays
+Drink once for each pet you have
+Drink 3 times if you haven't showered today

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "262952541667",
+    "firebase_url": "https://drank-a5131.firebaseio.com",
+    "project_id": "drank-a5131",
+    "storage_bucket": "drank-a5131.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:262952541667:android:f3dc08a9f6982908ab54d6",
+        "android_client_info": {
+          "package_name": "com.christo.drinkinggame"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "262952541667-p0vqa4bg0rlkt04479qq93jtrh6bq3qj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4LF1hFHy1_9YEN6StDEoOPnMQbhK2tzY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "262952541667-p0vqa4bg0rlkt04479qq93jtrh6bq3qj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
