@@ -20,10 +20,7 @@ dependencies:
   flutter:
     sdk: flutter
   google_fonts: ^1.1.0
-  toast: ^0.1.5
   flutter_launcher_icons: ^0.7.5
-  flutter_email_sender: ^3.0.1
-  device_info: ^0.4.0+4
   url_launcher: ^5.4.7
   flutter_inapp_purchase: ^2.2.0
   share: '>=0.6.4+3 <2.0.0'

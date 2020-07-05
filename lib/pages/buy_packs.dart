@@ -55,14 +55,12 @@ class _BuyPacksState extends State<BuyPacks> {
   StreamSubscription _conectionSubscription;
   final List<String> _productLists = Platform.isAndroid
       ? [
-          'android.test.purchased',
           'pack.south_africa',
           'pack.afrikaans',
           'pack.hot_and_heavy',
           'pack.countries_of_the_world',
-          'android.test.canceled',
         ]
-      : ['com.cooni.point1000', 'com.cooni.point5000'];
+      : []; //todo: add apple items of purchase
 
   String _platformVersion = 'Unknown';
 

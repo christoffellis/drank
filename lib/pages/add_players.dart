@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
-import 'package:toast/toast.dart';
 
 import 'package:drinkinggame/classes/players.dart';
 import 'package:flutter/material.dart';

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
 
 class Home extends StatefulWidget {
   @override
@@ -124,7 +125,8 @@ class _HomeState extends State<Home> {
                           onPressed: () {
                             //Navigator.pushNamed(context, '/donations');
                             Share.share(
-                                'Check out this awesome drinking app Drank!\n\nhttps://play.google.com/store/apps/details?id=com.christo.drinkinggame');
+                                'Check out this awesome drinking app Drank!\n\nGoogle Play Store: https://play.google.com/store/apps/details?id=com.christo.drinkinggame');
+                            //todo: add apple link
                           },
                         ),
                       ),
@@ -154,8 +156,12 @@ class _HomeState extends State<Home> {
                             ],
                           ),
                           onPressed: () {
-                            launch(
-                                'https://play.google.com/store/apps/details?id=com.christo.drinkinggame');
+                            if (Platform.isAndroid) {
+                              launch(
+                                  'https://play.google.com/store/apps/details?id=com.christo.drinkinggame');
+                            } else if (Platform.isIOS) {
+                              //todo: add apple link
+                            }
                           },
                         ),
                       ),
