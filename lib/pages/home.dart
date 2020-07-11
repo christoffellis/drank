@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
+import 'package:http/http.dart';
+import 'dart:convert';
 
 class Home extends StatefulWidget {
   @override
@@ -21,7 +23,24 @@ _shader(bounds, color) {
   ).createShader(bounds);
 }
 
+List<dynamic> _notificationList = [];
+
 class _HomeState extends State<Home> {
+  @override
+  void initState() {
+    _loadNotifications();
+    super.initState();
+  }
+
+  _loadNotifications() async {
+    String url = 'http://christoffellis.pythonanywhere.com/get-notifications';
+    Response response = await get(url);
+    setState(() {
+      _notificationList = json.decode(response.body);
+    });
+    print(_notificationList);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,12 +179,55 @@ class _HomeState extends State<Home> {
                               launch(
                                   'https://play.google.com/store/apps/details?id=com.christo.drinkinggame');
                             } else if (Platform.isIOS) {
+                              print('sss');
                               //todo: add apple link
                             }
                           },
                         ),
                       ),
                     ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.black.withOpacity(0.1),
+                      ),
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: _notificationList
+                            .map((notif) => Card(
+                                  color: Colors.black.withOpacity(0.1),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                  margin: EdgeInsets.all(12),
+                                  child: FlatButton(
+                                      onPressed: notif['hasLink']
+                                          ? () => launch(notif['link'])
+                                          : {},
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 12),
+                                      child: Column(
+                                        children: <Widget>[
+                                          Text(
+                                            notif['date'],
+                                            style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey[300]),
+                                          ),
+                                          Text(
+                                            notif['message'],
+                                            style: TextStyle(
+                                                fontSize: 18,
+                                                color: Colors.grey[300]),
+                                          ),
+                                        ],
+                                      )),
+                                ))
+                            .toList(),
+                      ),
+                    )
                   ],
                 ),
               )
