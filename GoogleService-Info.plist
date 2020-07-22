@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>262952541667-bjr685m5bmsod05gj5iv1i3l0n4diivi.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.262952541667-bjr685m5bmsod05gj5iv1i3l0n4diivi</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>262952541667-1hdrvs7uji7gost02jj5haaeh28ibkoq.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyADt4_5VnUJb7Rv8z1JrHinMWUFPqyhGCI</string>
+	<key>GCM_SENDER_ID</key>
+	<string>262952541667</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.christo.drinkinggame</string>
+	<key>PROJECT_ID</key>
+	<string>drank-a5131</string>
+	<key>STORAGE_BUCKET</key>
+	<string>drank-a5131.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:262952541667:ios:4c744da9301c4482ab54d6</string>
+	<key>DATABASE_URL</key>
+	<string>https://drank-a5131.firebaseio.com</string>
+</dict>
+</plist>
