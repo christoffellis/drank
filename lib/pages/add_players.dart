@@ -5,41 +5,27 @@ import 'package:flutter/cupertino.dart';
 
 import 'package:drinkinggame/classes/players.dart';
 import 'package:flutter/material.dart';
+import 'package:drinkinggame/main.dart';
 
 class AddPlayers extends StatefulWidget {
   @override
   _AddPlayersState createState() => _AddPlayersState();
 }
 
+bool _continuePress = false;
+
 Map textEditorControllers = {' ': new TextEditingController()};
-List<Player> players = [Player(' ', _getFunColor())];
+List<Player> players = [Player(' ', Colors.white)];
 int playerCounter = 1;
 
-List<Color> colors = [
-  Colors.redAccent,
-  Colors.lightGreenAccent,
-  Colors.yellowAccent,
-  Colors.blueAccent,
-  Colors.indigoAccent,
-  Colors.purpleAccent,
-  Colors.pinkAccent,
-  Colors.cyanAccent,
-];
-Color _getFunColor() {
-  var rand = Random();
-  Color newColor = colors[rand.nextInt(colors.length)];
-  return newColor;
-}
-
 _addNewPlayer() {
-  players.add(Player('Player $playerCounter', _getFunColor()));
+  players.add(Player('Player $playerCounter', Colors.white));
   textEditorControllers['Player $playerCounter'] = new TextEditingController();
 
   playerCounter++;
 }
 
 _removePlayer(Player person) {
-  colors.add(person.playerColor);
   players.remove(person);
 }
 
@@ -61,7 +47,7 @@ class _AddPlayersState extends State<AddPlayers> {
     players.clear();
     setState(() {
       textEditorControllers = {' ': new TextEditingController()};
-      players = [Player(' ', _getFunColor())];
+      players = [Player(' ', Colors.white)];
       playerCounter = 1;
       _showContinue = false;
     });
@@ -70,177 +56,179 @@ class _AddPlayersState extends State<AddPlayers> {
 
   @override
   Widget build(BuildContext context) {
-    _showContinueDelay() async {
-      await Future.delayed(Duration(seconds: 5));
-      _showContinue = false;
-      setState(() {});
-    }
-
-    return Scaffold(
-      backgroundColor: Color(0xff326c60),
-      appBar: AppBar(
-        title: Text('Add players'),
-        backgroundColor: Color(0xff439080),
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          AnimatedContainer(
-            alignment: Alignment.center,
-            duration: Duration(milliseconds: 200),
-            height: _showContinue ? 80 : 0,
-            child: FlatButton(
-              onPressed: () async {
-                _cleanupPlayers();
-                var nav = await Navigator.of(context).pushNamed('/categories');
-                if (nav == true || nav == null) {
-                  textEditorControllers.clear();
-                  players.clear();
-                  setState(() {
-                    textEditorControllers = {' ': new TextEditingController()};
-                    players = [Player(' ', _getFunColor())];
-                    playerCounter = 1;
-                    _showContinue = false;
-                  });
-                }
-              },
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Container(
-                  padding: EdgeInsets.all(12),
-                  child: Text(
-                    'Click to continue',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[200]),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ),
-            decoration: BoxDecoration(
-                color: Colors.black45.withOpacity(0.5),
-                borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(12),
-                    bottomRight: Radius.circular(12))),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          iconTheme: IconThemeData(
+            color: Colors.white, //change your color here
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-              child: Container(
-                height: MediaQuery.of(context).size.height,
-                child: ListView(
-                    scrollDirection: Axis.vertical,
-                    shrinkWrap: true,
-                    children: <Widget>[] +
+        ),
+        backgroundColor: Color(0xffFFAB94),
+        body: Container(
+          height: MediaQuery.of(context).size.height,
+          child: Stack(children: <Widget>[
+            Center(
+              child: SingleChildScrollView(
+                child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                          SizedBox(height: 10),
+                          Stack(
+                            overflow: Overflow.visible,
+                            children: <Widget>[
+                              Positioned(
+                                child: Container(
+                                  height:
+                                      MediaQuery.of(context).size.height * .15,
+                                  width: MediaQuery.of(context).size.width * .5,
+                                  decoration: BoxDecoration(
+                                      color: Color(0xffE7E7E7),
+                                      borderRadius: BorderRadius.circular(48)),
+                                ),
+                              ),
+                              AnimatedPositioned(
+                                duration: Duration(milliseconds: 150),
+                                top: _continuePress || !_showContinue ? 0 : -10,
+                                child: Container(
+                                  height:
+                                      MediaQuery.of(context).size.height * .15,
+                                  width: MediaQuery.of(context).size.width * .5,
+                                  child: FlatButton(
+                                    disabledColor: Color(0xffE7E7E7),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(48)),
+                                    child: Text(
+                                      'Continue',
+                                      style: TextStyle(fontSize: 30),
+                                    ),
+                                    onPressed: _showContinue
+                                        ? () {
+                                            setState(() {
+                                              _continuePress = !_continuePress;
+                                            });
+
+                                            Future.delayed(
+                                                    Duration(milliseconds: 150))
+                                                .whenComplete(() {
+                                              Navigator.pushNamed(
+                                                  context, '/categories');
+                                              setState(() {
+                                                _continuePress =
+                                                    !_continuePress;
+                                              });
+                                            });
+                                          }
+                                        : null,
+                                  ),
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(48)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 20,
+                          )
+                        ] +
                         players
-                            .map((player) => Card(
-                                color: player.playerColor,
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
+                            .map((player) => Column(
                                   children: <Widget>[
                                     Container(
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 12),
-                                      color: player.playerColor,
-                                      child: Icon(
-                                        Icons.person,
-                                        size: 40,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            0, 12, 12, 12),
-                                        child: Container(
-                                          width: 270,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(
-                                                width: 2,
-                                                color: HSVColor.fromColor(
-                                                        player.playerColor)
-                                                    .withSaturation(.8)
-                                                    .toColor()
-                                                    .withOpacity(0.4)),
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(8)),
-                                            color:
-                                                Colors.black87.withOpacity(0.2),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(5.0),
-                                            child: TextFormField(
-                                              onEditingComplete: () {
-                                                setState(() {});
-                                              },
-                                              onChanged: (text) {
-                                                if (player == players.last) {
-                                                  setState(() {
-                                                    _addNewPlayer();
-                                                  });
-                                                }
+                                      decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                                color: Color(0xffE7E7E7),
+                                                offset: Offset(0, 8))
+                                          ]),
+                                      width: MediaQuery.of(context).size.width *
+                                          0.8,
+                                      child: TextFormField(
+                                        cursorColor: Colors.black38,
+                                        maxLength: 50,
+                                        onEditingComplete: () {
+                                          FocusScope.of(context).nextFocus();
+                                        },
+                                        onChanged: (text) {
+                                          if (player == players.last) {
+                                            setState(() {
+                                              _addNewPlayer();
+                                            });
+                                          }
 
-                                                //If more than 2 editors are not empty, display continue message
-                                                setState(() {
-                                                  _showContinue =
-                                                      textEditorControllers
-                                                              .values
-                                                              .toList()
-                                                              .where((editor) =>
-                                                                  editor.text
-                                                                      .isNotEmpty)
-                                                              .length >=
-                                                          2;
-                                                });
-                                              },
-                                              maxLength: 50,
-                                              controller: textEditorControllers[
-                                                  player.name],
-                                              textAlign: TextAlign.center,
-                                              textInputAction:
-                                                  TextInputAction.next,
-                                              decoration: InputDecoration(
-                                                  enabledBorder:
-                                                      UnderlineInputBorder(
-                                                    borderSide: BorderSide(
-                                                        color: Colors.black
-                                                            .withOpacity(0),
-                                                        width: 2
-                                                        //  when the TextFormField in unfocused
-                                                        ),
-                                                  ),
-                                                  focusedBorder:
-                                                      UnderlineInputBorder(
-                                                          borderSide: BorderSide(
-                                                              color: Colors.grey
-                                                                  .withOpacity(
-                                                                      0))
-                                                          //  when the TextFormField in focused
-                                                          ),
-                                                  border:
-                                                      UnderlineInputBorder(),
-                                                  hintText:
-                                                      'Click to enter a name',
-                                                  contentPadding:
-                                                      EdgeInsets.fromLTRB(
-                                                          0, 2, 0, 0),
-                                                  counter: Offstage(),
-                                                  floatingLabelBehavior:
-                                                      FloatingLabelBehavior
-                                                          .always),
-                                            ),
-                                          ),
+                                          //If more than 2 editors are not empty, display continue message
+                                          setState(() {
+                                            _showContinue =
+                                                textEditorControllers.values
+                                                        .toList()
+                                                        .where((editor) =>
+                                                            editor.text
+                                                                .isNotEmpty)
+                                                        .length >=
+                                                    2;
+                                          });
+                                        },
+                                        controller:
+                                            textEditorControllers[player.name],
+                                        textCapitalization:
+                                            TextCapitalization.words,
+                                        style: TextStyle(
+                                            color: Colors.black, fontSize: 24),
+                                        textAlign: TextAlign.center,
+                                        textAlignVertical:
+                                            TextAlignVertical.center,
+                                        decoration: InputDecoration(
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 12),
+                                          hintText: 'Enter player name...',
+                                          counterText: '',
+                                          border: InputBorder.none,
                                         ),
                                       ),
                                     ),
+                                    player == players.last
+                                        ? Container(
+                                            height: 20,
+                                          )
+                                        : Container(
+                                            height: 20,
+                                            width: 8,
+                                            color: Color(0xffE7E7E7),
+                                          )
                                   ],
-                                )))
-                            .toList()),
+                                ))
+                            .toList() +
+                        [
+                          SizedBox(
+                            height: 80,
+                          )
+                        ]),
               ),
             ),
-          ),
-        ],
+            onBottom(AnimatedWave(
+              height: 30,
+              speed: 1,
+              yOffset: 0, //MediaQuery.of(context).size.height * 10 ~/ 100,
+              color: Color(0xff2eeff2),
+            )),
+            onBottom(AnimatedWave(
+              height: 30,
+              speed: 0.8,
+              yOffset: 0, //MediaQuery.of(context).size.height * 10 ~/ 100,
+              color: Color(0xff3ACCC9).withOpacity(0.8),
+            )),
+          ]),
+        ),
       ),
     );
   }

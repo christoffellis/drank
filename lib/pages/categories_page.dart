@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:drinkinggame/classes/categories_class.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -13,6 +14,10 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart';
 import 'dart:convert';
+import 'package:auto_size_text/auto_size_text.dart';
+
+bool _playPress = false;
+bool _buyPress = false;
 
 List<IAPItem> _items = [];
 List<PurchasedItem> _purchases = [];
@@ -26,11 +31,10 @@ _initCategories() async {
   final SharedPreferences prefs = await _prefs;
 
   categories = [
-    category('Pretty Basic', 'general', Icons.all_inclusive,
-        Colors.deepOrangeAccent[200],
+    category('Pretty Basic', 'general', Icons.all_inclusive, Color(0xffFFB6A8),
         desc: 'The way it\'s meant to be played. Standard rules, all the fun',
         active: prefs.getBool('general.active')),
-    category('Hot and Heavy', 'hah', Icons.whatshot, Color(0xffc670fc),
+    category('Hot and Heavy', 'hah', Icons.whatshot, Color(0xffFCACFC),
         desc:
             'Time to get down and dirty. Play for some naughty fun. Time to get those lips wet',
         active: prefs.getBool('hah.active') ?? true,
@@ -38,15 +42,15 @@ _initCategories() async {
         minAdCount: 3,
         currAdCount: prefs.getInt('hah.adRewardCount') ?? 0,
         storeId: 'pack.hot_and_heavy'),
-    category('King of the Cups', 'kotc', Icons.local_drink, Color(0xfffce770),
+    category('King of the Cups', 'kotc', Icons.local_drink, Color(0xffF3FFA8),
         active: prefs.getBool('kotc.active') ?? false,
         desc:
             'King of the Cups, a popular card game, to be played on Drank. Works best when played on its own, although if you want to play with other card packs, feel free to do so'),
-    category('Finisher', 'finisher', Icons.trending_down, Color(0xfffc7070),
+    category('Finisher', 'finisher', Icons.trending_down, Color(0xffFFA8A8),
         desc:
             'Fewer cards make for fewer chance of getting a finisher. These cards require the whole table to down their drinks. For faster, more powerful games',
         active: prefs.getBool('finisher.active') ?? true),
-    category('Countries of the World', 'cotw', Icons.public, Colors.green[400],
+    category('Countries of the World', 'cotw', Icons.public, Color(0xff91FFC4),
         active: prefs.getBool('cotw.active') ?? true,
         desc:
             'Challenge friends to see who knows more about the countries of the world!',
@@ -54,7 +58,7 @@ _initCategories() async {
         minAdCount: 2,
         currAdCount: prefs.getInt('cotw.adRewardCount') ?? 0,
         storeId: 'pack.countries_of_the_world'),
-    category('Afrikaans', 'afrikaans', Icons.flag, Colors.lightGreen[300],
+    category('Afrikaans', 'afrikaans', Icons.flag, Color(0xffAEFFA8),
         active: prefs.getBool('afrikaans.active') ?? true,
         desc:
             'For the afrikaans speaking. Rich with cultural references and nostalgia. Best paired with a Brandy and Coke',
@@ -62,7 +66,7 @@ _initCategories() async {
         minAdCount: 1,
         currAdCount: prefs.getInt('afrikaans.adRewardCount') ?? 0,
         storeId: 'pack.afrikaans'),
-    category('SU', 'su', Icons.school, Color.fromARGB(255, 228, 100, 132),
+    category('SU', 'su', Icons.school, Color(0xffE46484),
         active: prefs.getBool('su.active') ?? true,
         desc:
             'Made for student from Stellenbosch University. Challenge your flat mate or dare to upset a rival residence',
@@ -72,7 +76,7 @@ _initCategories() async {
         desc:
             'Made for student from Potchefstroom. Challenge your flat mate or dare to upset a rival residence',
         enabled: prefs.getBool('nwu.enabled') ?? false),
-    category('South Africa', 'sa', Icons.supervisor_account, Colors.lightBlue,
+    category('South Africa', 'sa', Icons.supervisor_account, Color(0xffA8DCFF),
         desc:
             'The patriotic experience. Have fun with friends in this South African related pack',
         active: prefs.getBool('sa.active') ?? true,
@@ -80,18 +84,24 @@ _initCategories() async {
         minAdCount: 2,
         currAdCount: prefs.getInt('sa.adRewardCount') ?? 0,
         storeId: 'pack.south_africa'),
-    /*
-    category('Dungeons and Dragons', 'dnd', Icons.casino, Colors.red[600],
+    category('Charades', 'charades', Icons.accessibility_new, Color(0xffA8DCFF),
+        desc: 'Jump up and down and get drunk doing it',
+        active: prefs.getBool('charades.active') ?? true,
+        bought: prefs.getBool('charades.bought') ?? false,
+        minAdCount: 2,
+        currAdCount: prefs.getInt('charades.adRewardCount') ?? 0,
+        storeId: 'pack.charades'),
+    category('Dungeons and Dragons', 'dnd', Icons.casino, Color(0xffFA8B8B),
         desc:
             'Made to play during a game of DnD, each card will bring a unique experience for each round of playing with your party. Drink some, play some',
         active: prefs.getBool('dnd.active') ?? true,
         bought: prefs.getBool('dnd.bought') ?? false,
         minAdCount: 2,
         currAdCount: prefs.getInt('dnd.adRewardCount') ?? 0,
-        storeId: 'packs.dungeons_and_dragons'), */
+        storeId: 'packs.dungeons_and_dragons'),
   ];
 
-  ownEntry = category('Own entries', 'own', Icons.mode_edit, Colors.teal[200],
+  ownEntry = category('Own entries', 'own', Icons.mode_edit, Color(0xffA8CBFF),
       active: prefs.getBool('own.active') ?? true);
 }
 
@@ -185,12 +195,19 @@ class _Choose_CategoriesState extends State<Choose_Categories> {
   StreamSubscription _conectionSubscription;
   final List<String> _productLists = Platform.isAndroid
       ? [
-          'android.test.purchased',
           'pack.hot_and_heavy',
           'pack.south_africa',
           'pack.afrikaans',
           'pack.countries_of_the_world',
-          'android.test.canceled',
+          'pack.dungeons_and_dragons',
+          'pack.charades',
+          'subscription.general',
+        ]
+      : ['com.cooni.point1000', 'com.cooni.point5000'];
+
+  final List<String> _subscriptionList = Platform.isAndroid
+      ? [
+          'subscription.general',
         ]
       : ['com.cooni.point1000', 'com.cooni.point5000'];
 
@@ -198,7 +215,11 @@ class _Choose_CategoriesState extends State<Choose_Categories> {
 
   @override
   void initState() {
-    print('init');
+    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      systemNavigationBarColor: Color(0xffFFAB94),
+    ));
+
     _initCategories();
     print(categories.where((cat) => cat.bought).length);
     _updateCatCounts().whenComplete(() {
@@ -209,6 +230,7 @@ class _Choose_CategoriesState extends State<Choose_Categories> {
       });
     });
     print(categories.where((cat) => cat.bought).length);
+
     super.initState();
   }
 
@@ -274,17 +296,34 @@ class _Choose_CategoriesState extends State<Choose_Categories> {
     });
   }
 
+  hasSubscription() async {
+    return await FlutterInappPurchase.instance
+        .checkSubscribed(sku: 'subscription.general');
+  }
+
   updateCategories() async {
     try {
       SharedPreferences prefs = await _prefs;
-      await _getPurchaseHistory();
-      for (PurchasedItem item in _purchases) {
-        if (categories.where((cat) => cat.storeId == item.productId).isNotEmpty)
-          categories.firstWhere((cat) => cat.storeId == item.productId).bought =
-              true;
-        prefs.setBool(
-            '${categories.firstWhere((cat) => cat.storeId == item.productId).classId}.bought',
-            true);
+
+      if (await hasSubscription()) {
+        categories.forEach((cat) {
+          setState(() {
+            cat.bought = true;
+          });
+        });
+        await _getPurchaseHistory();
+        for (PurchasedItem item in _purchases) {
+          print(item);
+          if (categories
+              .where((cat) => cat.storeId == item.productId)
+              .isNotEmpty)
+            categories
+                .firstWhere((cat) => cat.storeId == item.productId)
+                .bought = true;
+          prefs.setBool(
+              '${categories.firstWhere((cat) => cat.storeId == item.productId).classId}.bought',
+              true);
+        }
       }
     } on PlatformException catch (e) {
       print(e.code);
@@ -346,262 +385,363 @@ class _Choose_CategoriesState extends State<Choose_Categories> {
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: AppBar(
-        leading: new IconButton(
-          icon: new Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context, true);
-          },
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        iconTheme: IconThemeData(
+          color: Colors.white, //change your color here
         ),
-        backgroundColor: Color(0xff439080),
-        title: Text('Click to select categories'),
-        actions: <Widget>[
-          Container(
-            width: 60,
-            child: FlatButton(
-              onPressed: () {
-                _animatedClicked = !_animatedClicked;
-                setState(() {});
-              },
-              child: Icon(Icons.info),
-            ),
-          )
-        ],
       ),
-      backgroundColor: Color(0xff326c60),
+      backgroundColor: Color(0xffFFAB94),
       body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            AnimatedContainer(
-              duration: Duration(milliseconds: 300),
-              height: _animatedClicked ? 150 : 0,
-              decoration: BoxDecoration(color: Colors.grey[200], boxShadow: [
-                BoxShadow(
-                  color: Colors.grey[800].withOpacity(0.5),
-                  spreadRadius: 5,
-                  blurRadius: 7,
-                  offset: Offset(0, 3), // changes position of shadow
-                ),
-              ]),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.all(18),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    children: <Widget>[
-                      Text(
-                        _informationText,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Container(
-              height: MediaQuery.of(context).size.height - 80,
-              child: ListView(
-                scrollDirection: Axis.vertical,
-                shrinkWrap: true,
-                children: [
-                      Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Container(
-                          height: 80,
-                          width: 220,
-                          child: RaisedButton(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Text('Play!'),
-                                Text(
-                                  '$_activeCardCount cards active',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.grey),
-                                )
-                              ],
+        child: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                height: MediaQuery.of(context).size.height,
+                child: ListView(
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  children: <Widget>[
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Center(
+                      child: Stack(
+                        overflow: Overflow.visible,
+                        children: <Widget>[
+                          Positioned(
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * .15,
+                              width: MediaQuery.of(context).size.width * .6,
+                              decoration: BoxDecoration(
+                                  color: Color(0xffE7E7E7),
+                                  borderRadius: BorderRadius.circular(48)),
                             ),
-                            elevation: 20,
-                            color: Colors.grey[100],
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/game');
-                            },
                           ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(125, 0, 125, 10),
-                        child: Container(
-                          width: 100,
-                          child: RaisedButton(
-                            color: Colors.amberAccent,
-                            child: Text('Get new packs'),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/buypacks');
-                            },
-                          ),
-                        ),
-                      )
-                    ] +
-                    categories
-                        .where((cat) => cat.bought && cat.enabled)
-                        .map((category) => Padding(
-                              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                              child: ShaderMask(
-                                shaderCallback: (Rect bounds) {
-                                  return LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [Colors.black, Colors.white])
-                                      .createShader(bounds);
-                                },
-                                blendMode: category.active
-                                    ? BlendMode.dst
-                                    : BlendMode.hue,
-                                child: RaisedButton(
-                                  color: category.classColor,
-                                  onPressed: () {
+                          AnimatedPositioned(
+                            duration: Duration(milliseconds: 150),
+                            top: _playPress ? 0 : -10,
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * .15,
+                              width: MediaQuery.of(context).size.width * .6,
+                              child: FlatButton(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24)),
+                                child: Text(
+                                  'Continue',
+                                  style: TextStyle(fontSize: 30),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _playPress = !_playPress;
+                                  });
+
+                                  Future.delayed(Duration(milliseconds: 150))
+                                      .whenComplete(() {
+                                    Navigator.pushNamed(context, '/game');
                                     setState(() {
-                                      category.active = !category.active;
-                                      _updateCategoryActive(category);
-                                      _setActiveCardCount();
+                                      _playPress = !_playPress;
                                     });
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(25.0),
-                                    child: Column(
-                                      children: <Widget>[
-                                        Row(
-                                          children: <Widget>[
-                                            Icon(
-                                              category.classIcon,
-                                              size: 30,
-                                            ),
-                                            SizedBox(
-                                              width: 20,
-                                            ),
-                                            Expanded(
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: <Widget>[
-                                                  Text(
-                                                    category.className,
-                                                    style:
-                                                        TextStyle(fontSize: 18),
+                                  });
+                                },
+                              ),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(48)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Center(
+                      child: Stack(
+                        overflow: Overflow.visible,
+                        children: <Widget>[
+                          Positioned(
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * .06,
+                              width: MediaQuery.of(context).size.width * .4,
+                              decoration: BoxDecoration(
+                                  color: Color(0xffECCE50),
+                                  borderRadius: BorderRadius.circular(48)),
+                            ),
+                          ),
+                          AnimatedPositioned(
+                            duration: Duration(milliseconds: 150),
+                            top: _buyPress ? 0 : -6,
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * .06,
+                              width: MediaQuery.of(context).size.width * .4,
+                              child: FlatButton(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24)),
+                                child: Text(
+                                  'Get more packs',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _buyPress = !_buyPress;
+                                  });
+
+                                  Future.delayed(Duration(milliseconds: 150))
+                                      .whenComplete(() {
+                                    Navigator.pushNamed(context, '/buypacks');
+                                    setState(() {
+                                      _buyPress = !_buyPress;
+                                    });
+                                  });
+                                },
+                              ),
+                              decoration: BoxDecoration(
+                                  color: Color(0xffFFE67F),
+                                  borderRadius: BorderRadius.circular(18)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 24,
+                    ),
+                    Container(
+                        decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  offset: Offset(3, -3)),
+                            ],
+                            color: Color(0xffFAA48C),
+                            borderRadius: BorderRadius.circular(24)),
+                        margin: EdgeInsets.symmetric(horizontal: 12),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                        child: Column(
+                          children: <Widget>[
+                                Text(
+                                  'Tap to enable packs',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                                SizedBox(
+                                  height: 8,
+                                )
+                              ] +
+                              categories
+                                  .where((cat) => cat.bought && cat.enabled)
+                                  .map((category) => Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Container(
+                                          height: 70,
+                                          child: Stack(
+                                            overflow: Overflow.visible,
+                                            children: <Widget>[
+                                              Positioned(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                      color: HSVColor.fromColor(
+                                                              category
+                                                                  .classColor)
+                                                          .withValue(0.85)
+                                                          .toColor(),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              48)),
+                                                ),
+                                              ),
+                                              AnimatedPositioned(
+                                                top: category.active ? -6 : 0,
+                                                height: 70,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.844,
+                                                duration:
+                                                    Duration(milliseconds: 50),
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(48),
+                                                  child: ShaderMask(
+                                                    shaderCallback:
+                                                        (Rect bounds) {
+                                                      return LinearGradient(
+                                                              begin: Alignment
+                                                                  .topCenter,
+                                                              end: Alignment
+                                                                  .bottomCenter,
+                                                              colors: [
+                                                            Colors.black,
+                                                            Colors.white
+                                                          ])
+                                                          .createShader(bounds);
+                                                    },
+                                                    blendMode: category.active
+                                                        ? BlendMode.dst
+                                                        : BlendMode.hue,
+                                                    child: FlatButton(
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          48)),
+                                                      color:
+                                                          category.classColor,
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          category.active =
+                                                              !category.active;
+                                                        });
+                                                      },
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8.0),
+                                                        child: Row(
+                                                          children: <Widget>[
+                                                            Icon(
+                                                              category
+                                                                  .classIcon,
+                                                              size: 28,
+                                                            ),
+                                                            SizedBox(
+                                                              width: 12,
+                                                            ),
+                                                            Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .center,
+                                                              children: <
+                                                                  Widget>[
+                                                                Text(category
+                                                                    .className),
+                                                                Text(category
+                                                                        .active
+                                                                    ? 'Enabled with ${categoryCounts[category.classId]} cards'
+                                                                    : 'This pack is disabled'),
+                                                              ],
+                                                            )
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
                                                   ),
-                                                  Text(
-                                                    category.active
-                                                        ? categoryCounts[category
-                                                                    .classId]
-                                                                .toString() +
-                                                            ' cards'
-                                                                .replaceFirst(
-                                                                    'null cards',
-                                                                    '')
-                                                        : 'Disabled',
-                                                    style: TextStyle(
-                                                        color:
-                                                            Colors.grey[800]),
-                                                  )
-                                                ],
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ))
+                                  .toList() +
+                              [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Container(
+                                    height: 70,
+                                    child: Stack(
+                                      overflow: Overflow.visible,
+                                      children: <Widget>[
+                                        Positioned(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: HSVColor.fromColor(
+                                                        ownEntry.classColor)
+                                                    .withValue(0.85)
+                                                    .toColor(),
+                                                borderRadius:
+                                                    BorderRadius.circular(48)),
+                                          ),
+                                        ),
+                                        AnimatedPositioned(
+                                          top: ownEntry.active ? -6 : 0,
+                                          height: 70,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.844,
+                                          duration: Duration(milliseconds: 50),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(48),
+                                            child: ShaderMask(
+                                              shaderCallback: (Rect bounds) {
+                                                return LinearGradient(
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
+                                                    colors: [
+                                                      Colors.black,
+                                                      Colors.white
+                                                    ]).createShader(bounds);
+                                              },
+                                              blendMode: ownEntry.active
+                                                  ? BlendMode.dst
+                                                  : BlendMode.hue,
+                                              child: FlatButton(
+                                                shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            48)),
+                                                color: ownEntry.classColor,
+                                                onPressed: () {
+                                                  setState(() {
+                                                    ownEntry.active =
+                                                        !ownEntry.active;
+                                                  });
+                                                },
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: Row(
+                                                    children: <Widget>[
+                                                      Icon(
+                                                        ownEntry.classIcon,
+                                                        size: 28,
+                                                      ),
+                                                      SizedBox(
+                                                        width: 12,
+                                                      ),
+                                                      Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        children: <Widget>[
+                                                          Text(ownEntry
+                                                              .className),
+                                                          Text(ownEntry.active
+                                                              ? 'Enabled with ${_ownCardCount} cards'
+                                                              : 'This pack is disabled'),
+                                                        ],
+                                                      )
+                                                    ],
+                                                  ),
+                                                ),
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                        AnimatedContainer(
-                                            constraints: _animatedClicked
-                                                ? BoxConstraints(maxHeight: 100)
-                                                : BoxConstraints(maxHeight: 0),
-                                            duration:
-                                                Duration(milliseconds: 300),
-                                            child: Text(category.description))
+                                          ),
+                                        )
                                       ],
                                     ),
                                   ),
-                                ),
-                              ),
-                            ))
-                        .toList() +
-                    [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                        child: ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [Colors.black, Colors.white])
-                                .createShader(bounds);
-                          },
-                          blendMode:
-                              ownEntry.active ? BlendMode.dst : BlendMode.hue,
-                          child: RaisedButton(
-                            color: ownEntry.classColor,
-                            onPressed: () {
-                              setState(() {
-                                ownEntry.active = !ownEntry.active;
-                                _updateCategoryActive(ownEntry);
-                                _setActiveCardCount().whenComplete(() {});
-                              });
-                            },
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.fromLTRB(25.0, 25, 25, 2),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: <Widget>[
-                                  Row(
-                                    children: <Widget>[
-                                      Icon(
-                                        ownEntry.classIcon,
-                                        size: 30,
-                                      ),
-                                      SizedBox(
-                                        width: 20,
-                                      ),
-                                      Expanded(
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: <Widget>[
-                                            Text(
-                                              ownEntry.className,
-                                              style: TextStyle(fontSize: 18),
-                                            ),
-                                            Text(
-                                              ownEntry.active
-                                                  ? _ownCardCount.toString() +
-                                                      ' cards'
-                                                  : 'Disabled',
-                                              style: TextStyle(
-                                                  color: Colors.grey[700]),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  FlatButton(
-                                    color: Colors.teal[100],
-                                    shape: new RoundedRectangleBorder(
-                                        borderRadius:
-                                            new BorderRadius.circular(10.0)),
-                                    onPressed: () {
-                                      Navigator.pushNamed(
-                                          context, '/ownentries');
-                                    },
-                                    child: Icon(Icons.open_in_new),
-                                  )
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
+                                )
+                              ],
+                        )),
+                    SizedBox(
+                      height: 20,
+                    )
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart';
+import 'package:wakelock/wakelock.dart';
 
 class Loader extends StatefulWidget {
   @override
@@ -86,6 +88,12 @@ _updateActionsFile() async {
 class _LoaderState extends State<Loader> {
   @override
   void initState() {
+    Wakelock.enable();
+    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      systemNavigationBarColor: Color(0xffFFAB94),
+    ));
+
     _updateActionsFile().whenComplete(() {
       Navigator.pushNamed(context, '/home');
     });
@@ -95,7 +103,7 @@ class _LoaderState extends State<Loader> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xff326c60),
+      backgroundColor: Color(0xffFFAB94),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -105,7 +113,7 @@ class _LoaderState extends State<Loader> {
               width: 150,
               height: 150,
               child: CircularProgressIndicator(
-                backgroundColor: Color(0xff439080),
+                backgroundColor: Color(0xffFFD3C7),
                 valueColor: AlwaysStoppedAnimation<Color>(
                     Colors.white.withOpacity(0.8)),
               ),

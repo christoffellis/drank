@@ -140,9 +140,9 @@ class _OwnEntriesState extends State<OwnEntries> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xff224840),
+      backgroundColor: Color(0xffFFAB94),
       appBar: AppBar(
-        backgroundColor: Color(0xff439080),
+        backgroundColor: Color(0xffFFBAA7),
         title: Text('Tap to edit your entries'),
       ),
       body: SingleChildScrollView(
@@ -150,81 +150,76 @@ class _OwnEntriesState extends State<OwnEntries> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.grey[900],
-                      offset: Offset(0, 4),
-                      blurRadius: 8)
-                ],
-                color: Color(0xff326c60),
-              ),
-              height: 450,
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  //await loadEntries();
-                  setState(() {});
-                },
-                child: ListView(
-                    physics: AlwaysScrollableScrollPhysics(),
-                    children: editors.entries
-                        .map((entry) => Dismissible(
-                              background: Container(
-                                color: Colors.redAccent,
-                              ),
-                              key: Key(entry.key.toString()),
-                              onDismissed: (_) => removeIndex(entry.key),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: Color(0xff82b5ab),
-                                    border: Border(
-                                        bottom: BorderSide(
-                                      color: Color(0xff224840),
-                                      width: 2,
-                                    ))),
-                                padding: EdgeInsets.all(8),
-                                child: TextFormField(
-                                  controller: editors[entry.key],
-                                  maxLines: 3,
-                                  minLines: 1,
-                                  decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    errorBorder: InputBorder.none,
-                                    disabledBorder: InputBorder.none,
-                                    contentPadding: EdgeInsets.only(
-                                        left: 15,
-                                        bottom: 11,
-                                        top: 11,
-                                        right: 15),
-                                    hintText: 'Tap to enter text',
-                                  ),
+                color: Color(0xffFAA48C),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text(
+                    'To address one of the players in a card, use the tags @name1 and @name2. Any names higher than 2 will currently not work',
+                    style: TextStyle(
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                )),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              height: 600,
+              child: ListView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  children: editors.entries
+                      .map((entry) => Stack(
+                            children: <Widget>[
+                              Dismissible(
+                                key: Key(entry.key.toString()),
+                                onDismissed: (_) => removeIndex(entry.key),
+                                child: Column(
+                                  children: <Widget>[
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: 12, horizontal: 12),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        color: Color(0xffFFBAA7),
+                                      ),
+                                      child: TextFormField(
+                                        controller: editors[entry.key],
+                                        maxLines: 3,
+                                        minLines: 1,
+                                        decoration: InputDecoration(
+                                          border: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
+                                          contentPadding: EdgeInsets.only(
+                                              left: 15,
+                                              bottom: 11,
+                                              top: 11,
+                                              right: 15),
+                                          hintText: 'Tap to enter text',
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 12,
+                                    )
+                                  ],
                                 ),
                               ),
-                            ))
-                        .toList()),
-              ),
+                            ],
+                          ))
+                      .toList()),
             ),
-            Container(
-                child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                'To address one of the players in a card, use the tags @name1 and @name2. Any names higher than 2 will currently not work',
-                style: TextStyle(
-                  color: Colors.grey[200],
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ))
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Color(0xffabdc41),
+        backgroundColor: Color(0xff81F27D),
         tooltip: 'Click to add new cards',
-        child: Icon(Icons.add),
+        child: Icon(
+          Icons.add,
+          color: Color(0xff0B6308),
+        ),
         onPressed: () {
           editors[getFreshMapID()] = new TextEditingController();
           setState(() {});

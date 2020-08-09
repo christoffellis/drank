@@ -6,22 +6,19 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'package:http/http.dart';
 import 'dart:convert';
+import 'dart:math';
+
+import 'package:drinkinggame/main.dart';
 
 class Home extends StatefulWidget {
   @override
   _HomeState createState() => _HomeState();
 }
 
-_shader(bounds, color) {
-  return LinearGradient(
-    begin: Alignment.bottomLeft,
-    end: Alignment.topRight,
-    colors: [
-      color.withOpacity(.6),
-      HSVColor.fromColor(color).withSaturation(1).toColor().withOpacity(.4)
-    ],
-  ).createShader(bounds);
-}
+bool _playPress = false;
+bool _sharePress = false;
+bool _ratePress = false;
+bool _cardsPress = false;
 
 List<dynamic> _notificationList = [];
 
@@ -29,11 +26,18 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     _loadNotifications();
+
+    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      systemNavigationBarColor: Color(0xff3ACCC9),
+    ));
+
     super.initState();
   }
 
   _loadNotifications() async {
     String url = 'http://christoffellis.pythonanywhere.com/get-notifications';
+
     Response response = await get(url);
     setState(() {
       _notificationList = json.decode(response.body);
@@ -44,195 +48,239 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          centerTitle: true,
-          title: Text('Drank'),
-          backgroundColor: Color(0xff326c60), //Color(0xff439080),
-          elevation: 0,
-        ),
-        backgroundColor: Color(0xff326c60),
-        body: SingleChildScrollView(
-          child: Column(
+      backgroundColor: Color(0xffFFAB94),
+      body: WillPopScope(
+        child: SingleChildScrollView(
+            child: Container(
+          height: MediaQuery.of(context).size.height,
+          width: MediaQuery.of(context).size.width,
+          child: Stack(
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(25.0),
+              Center(
+                child: Text(
+                  'Drank',
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 60),
+                ),
+              ),
+              onBottom(AnimatedWave(
+                height: 70,
+                speed: 1,
+                yOffset: MediaQuery.of(context).size.height * 40 ~/ 100,
+                color: Color(0xff2eeff2),
+              )),
+              onBottom(AnimatedWave(
+                height: 70,
+                speed: 0.8,
+                yOffset: MediaQuery.of(context).size.height * 40 ~/ 100,
+                color: Color(0xff3ACCC9).withOpacity(0.8),
+              )),
+              Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    ShaderMask(
-                      shaderCallback: (Rect bounds) {
-                        return _shader(bounds, Color(0xfffdaa88));
-                      },
-                      blendMode: BlendMode.colorBurn,
-                      child: Container(
-                        height: 100,
-                        width: MediaQuery.of(context).size.width,
-                        child: RaisedButton(
-                          color: Color(0xfffdaa88),
-                          elevation: 10,
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/addplayers');
-                          },
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text('Start',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                  )),
-                              Text('Click to setup a game of Drank')
-                            ],
-                          ),
+                    Stack(overflow: Overflow.visible, children: <Widget>[
+                      Positioned(
+                        child: Container(
+                          height: MediaQuery.of(context).size.height * .2,
+                          width: MediaQuery.of(context).size.width * .6,
+                          decoration: BoxDecoration(
+                              color: Color(0xffE7E7E7),
+                              borderRadius: BorderRadius.circular(48)),
                         ),
                       ),
-                    ),
-                    SizedBox(
-                      height: 25,
-                    ),
-                    ShaderMask(
-                      shaderCallback: (Rect bounds) {
-                        return _shader(bounds, Color(0xff88ddfd));
-                      },
-                      blendMode: BlendMode.colorBurn,
-                      child: Container(
-                        height: 100,
-                        width: 0.8 * MediaQuery.of(context).size.width,
-                        child: RaisedButton(
-                          color: Color(0xff88ddfd),
-                          elevation: 10,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text('Own Entries',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                  )),
-                              Text('Add your own cards to play Drank with')
-                            ],
+                      AnimatedPositioned(
+                        duration: Duration(milliseconds: 150),
+                        top: _playPress ? 0 : -10,
+                        child: Container(
+                          height: MediaQuery.of(context).size.height * .2,
+                          width: MediaQuery.of(context).size.width * .6,
+                          child: FlatButton(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(48)),
+                            child: Text(
+                              'Play',
+                              style: TextStyle(fontSize: 30),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _playPress = !_playPress;
+                              });
+
+                              Future.delayed(Duration(milliseconds: 150))
+                                  .whenComplete(() {
+                                Navigator.pushNamed(context, '/addplayers');
+                                setState(() {
+                                  _playPress = !_playPress;
+                                });
+                              });
+                            },
                           ),
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/ownentries');
-                          },
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(48)),
                         ),
-                      ),
-                    ),
+                      )
+                    ]),
                     SizedBox(
-                      height: 25,
+                      height: MediaQuery.of(context).size.height * .4,
                     ),
-                    ShaderMask(
-                      shaderCallback: (Rect bounds) {
-                        return _shader(bounds, Color(0xfffde388));
-                      },
-                      blendMode: BlendMode.colorBurn,
-                      child: Container(
-                        height: 100,
-                        width: 0.8 * MediaQuery.of(context).size.width,
-                        child: RaisedButton(
-                          color: Color(0xfffde388),
-                          elevation: 10,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text('Share',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                  )),
-                              Text('Tell your friends about Drank')
-                            ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Stack(overflow: Overflow.visible, children: <Widget>[
+                          Positioned(
+                            child: Container(
+                              height: 80,
+                              width: 88,
+                              decoration: BoxDecoration(
+                                  color: Color(0xffE7E7E7),
+                                  borderRadius: BorderRadius.circular(24)),
+                            ),
                           ),
-                          onPressed: () {
-                            //Navigator.pushNamed(context, '/donations');
-                            Share.share(
-                                'Check out this awesome drinking app Drank!\n\nGoogle Play Store: https://play.google.com/store/apps/details?id=com.christo.drinkinggame');
-                            //todo: add apple link
-                          },
+                          AnimatedPositioned(
+                            duration: Duration(milliseconds: 150),
+                            top: _sharePress ? 0 : -10,
+                            child: Container(
+                              height: 80,
+                              width: 88,
+                              child: FlatButton(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24)),
+                                child: Text(
+                                  'Share',
+                                  style: TextStyle(fontSize: 20),
+                                  textAlign: TextAlign.center,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _sharePress = !_sharePress;
+                                  });
+
+                                  Future.delayed(Duration(milliseconds: 150))
+                                      .whenComplete(() {
+                                    Share.share(
+                                        'Hey! Check out this drinking game I\'ve wanted to play! It\'s called Drank.\n\nAvailable on the Play Store: www.blahblahblah.com');
+                                    setState(() {
+                                      _sharePress = !_sharePress;
+                                    });
+                                  });
+                                },
+                              ),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24)),
+                            ),
+                          )
+                        ]),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * .02,
                         ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 25,
-                    ),
-                    ShaderMask(
-                      shaderCallback: (Rect bounds) {
-                        return _shader(bounds, Color(0xff88fdb1));
-                      },
-                      blendMode: BlendMode.colorBurn,
-                      child: Container(
-                        height: 100,
-                        width: 0.8 * MediaQuery.of(context).size.width,
-                        child: RaisedButton(
-                          color: Color(0xff88fdb1),
-                          elevation: 10,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text('Rate Us',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                  )),
-                              Text('If you enjoy Drank, rate us 5-stars')
-                            ],
+                        Stack(overflow: Overflow.visible, children: <Widget>[
+                          Positioned(
+                            child: Container(
+                              height: 80,
+                              width: 88,
+                              decoration: BoxDecoration(
+                                  color: Color(0xffE7E7E7),
+                                  borderRadius: BorderRadius.circular(24)),
+                            ),
                           ),
-                          onPressed: () {
-                            if (Platform.isAndroid) {
-                              launch(
-                                  'https://play.google.com/store/apps/details?id=com.christo.drinkinggame');
-                            } else if (Platform.isIOS) {
-                              print('sss');
-                              //todo: add apple link
-                            }
-                          },
+                          AnimatedPositioned(
+                            duration: Duration(milliseconds: 150),
+                            top: _ratePress ? 0 : -10,
+                            child: Container(
+                              height: 80,
+                              width: 88,
+                              child: FlatButton(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24)),
+                                child: Text(
+                                  'Rate Us',
+                                  style: TextStyle(fontSize: 20),
+                                  textAlign: TextAlign.center,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _ratePress = !_ratePress;
+                                  });
+
+                                  Future.delayed(Duration(milliseconds: 150))
+                                      .whenComplete(() {
+                                    if (Platform.isAndroid) {
+                                    } else if (Platform
+                                        .isIOS) {} //todo: populate
+                                    setState(() {
+                                      _ratePress = !_ratePress;
+                                    });
+                                  });
+                                },
+                              ),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24)),
+                            ),
+                          )
+                        ]),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * .02,
                         ),
-                      ),
+                        Stack(overflow: Overflow.visible, children: <Widget>[
+                          Positioned(
+                            child: Container(
+                              height: 80,
+                              width: 88,
+                              decoration: BoxDecoration(
+                                  color: Color(0xffE7E7E7),
+                                  borderRadius: BorderRadius.circular(24)),
+                            ),
+                          ),
+                          AnimatedPositioned(
+                            duration: Duration(milliseconds: 150),
+                            top: _cardsPress ? 0 : -10,
+                            child: Container(
+                              height: 80,
+                              width: 88,
+                              child: FlatButton(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24)),
+                                child: Text(
+                                  'Your Cards',
+                                  style: TextStyle(fontSize: 20),
+                                  textAlign: TextAlign.center,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _cardsPress = !_cardsPress;
+                                  });
+
+                                  Future.delayed(Duration(milliseconds: 150))
+                                      .whenComplete(() {
+                                    Navigator.pushNamed(context, '/ownentries');
+                                    setState(() {
+                                      _cardsPress = !_cardsPress;
+                                    });
+                                  });
+                                },
+                              ),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24)),
+                            ),
+                          )
+                        ]),
+                      ],
                     ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.black.withOpacity(0.1),
-                      ),
-                      child: ListView(
-                        shrinkWrap: true,
-                        children: _notificationList
-                            .map((notif) => Card(
-                                  color: Colors.black.withOpacity(0.1),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  margin: EdgeInsets.all(12),
-                                  child: FlatButton(
-                                      onPressed: notif['hasLink']
-                                          ? () => launch(notif['link'])
-                                          : {},
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 12),
-                                      child: Column(
-                                        children: <Widget>[
-                                          Text(
-                                            notif['date'],
-                                            style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[300]),
-                                          ),
-                                          Text(
-                                            notif['message'],
-                                            style: TextStyle(
-                                                fontSize: 18,
-                                                color: Colors.grey[300]),
-                                          ),
-                                        ],
-                                      )),
-                                ))
-                            .toList(),
-                      ),
-                    )
                   ],
                 ),
-              )
+              ),
             ],
           ),
-        ));
+        )),
+      ),
+    );
   }
 }

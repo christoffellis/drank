@@ -7,17 +7,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:drinkinggame/classes/players.dart';
 import 'package:drinkinggame/classes/categories_class.dart';
+import 'package:drinkinggame/main.dart';
 import 'package:flutter/material.dart';
 import 'categories_page.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart';
 import 'dart:convert';
+import 'package:firebase_admob/firebase_admob.dart';
+import 'package:flutter_inapp_purchase/flutter_inapp_purchase.dart';
 
 class Game extends StatefulWidget {
   @override
   _GameState createState() => _GameState();
 }
+
+const String testDevice = 'E4D00BAD99E7560'; //81B32217D5343EDA3';
 
 Future<String> get _localPath async {
   final directory = await getApplicationDocumentsDirectory();
@@ -53,6 +58,8 @@ Future<File> get _ownFile async {
 
 List<category> loadableCategories = [];
 List<String> actionLineup = [];
+bool _answerCardShown = true;
+String _answerString;
 
 _getPlayerNamesSorted() {
   players.sort(
@@ -77,7 +84,9 @@ _replaceMarkers(String haystack) {
   }
 
   if (haystack.contains('*enter*')) {
-    haystack = haystack.replaceAll('*enter*', '\n\n');
+    _answerString = haystack.split('*enter*')[1];
+    _answerCardShown = false;
+    haystack = haystack.split('*enter*')[0] + '\n\nTap to get the answer';
   }
 
   return haystack;
@@ -103,6 +112,11 @@ _logCategories() async {
   //print(body);
 }
 
+Widget _buttonBarChild = Container();
+
+int _actionCountLimit = 65;
+bool _buttonsActive = false;
+
 class _GameState extends State<Game> {
   String buttonText = 'Click to start';
   Icon categoryIcon;
@@ -110,10 +124,16 @@ class _GameState extends State<Game> {
   Color buttonColor = Colors.greenAccent;
   int actionCount = 1;
 
+  static const MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo(
+      testDevices: testDevice != null ? <String>[testDevice] : null,
+      nonPersonalizedAds: true,
+      keywords: <String>['Drinking', 'game', 'alcohol']);
+
   _loadActions() async {
     loadableCategories.clear();
     actionLineup.clear();
     actionCount = 0;
+    _actionCountLimit = 65;
     for (category cat in categories) {
       if (cat.activeInGame()) {
         loadableCategories.add(cat);
@@ -152,13 +172,22 @@ class _GameState extends State<Game> {
     _updateButton();
   }
 
+  hasSubscription() async {
+    return await FlutterInappPurchase.instance
+        .checkSubscribed(sku: 'subscription.general');
+  }
+
   _updateButton() async {
     /*
   This checks if the amount of cards displayed exceeds the amount of cards available.
   If not, a fresh card is displayed and the
    */
-    if (actionCount == 0) {
-    } else if (actionLineup.length > actionCount && actionCount < 65) {
+    if (!_answerCardShown) {
+      buttonText = _answerString;
+      _answerCardShown = true;
+    } else if (actionCount == 0) {
+    } else if (actionLineup.length > actionCount &&
+        actionCount < _actionCountLimit) {
       if (loadableCategories
               .where((cat) =>
                   (cat.classId == actionLineup[actionCount].split('#')[0]))
@@ -182,23 +211,93 @@ class _GameState extends State<Game> {
         buttonColor = ownEntry.classColor;
         categoryType = ownEntry.classId;
       }
-    } else if (actionLineup.length == actionCount || actionCount == 65) {
+    } else if (actionLineup.length == actionCount ||
+        actionCount == _actionCountLimit) {
       buttonText =
-          'That\'s a wrap.\n Thanks for playing and consider voting 5 stars! \n\n Click again to return to the main menu';
+          'That\'s a wrap.\n Thanks for playing and consider voting 5 stars! \n\nIf you would like to continue, you can ${!await hasSubscription() ? 'watch an ad' : 'click below'}. Otherwise, clicking will return you to the main menu';
       buttonColor = Colors.grey[300];
+
+      if (await hasSubscription()) {
+        setState(() {
+          _buttonBarChild = RaisedButton(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            color: Colors.amberAccent[100],
+            onPressed: () {
+              setState(() {
+                _actionCountLimit += 35;
+                _updateButton();
+                _buttonBarChild = Container();
+              });
+            },
+            child: Text('Continue'),
+          );
+        });
+      } else {
+        setState(() {
+          _buttonBarChild = RaisedButton(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            color: Colors.amberAccent[100],
+            onPressed: _buttonsActive
+                ? () {
+                    videoAd.show();
+                  }
+                : () {
+                    print('did not show ad');
+                  },
+            child: Text(_buttonsActive ? 'Watch an ad' : 'No ad is available'),
+          );
+        });
+      }
       categoryType = '';
     } else {
-      Navigator.pushNamed(context, '/home');
+      Navigator.popUntil(context, ModalRoute.withName('/home'));
     }
-
-    actionCount += 1;
+    if (_answerCardShown) {
+      actionCount += 1;
+    }
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      systemNavigationBarColor: buttonColor,
+    ));
   }
+
+  RewardedVideoAd videoAd = RewardedVideoAd.instance;
 
   @override
   void initState() {
+    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      systemNavigationBarColor: buttonColor,
+    ));
+    _buttonBarChild = Container();
     _loadActions().whenComplete(() {
       setState(() {});
     });
+
+    FirebaseAdMob.instance.initialize(appId: admobId);
+    videoAd.listener =
+        (RewardedVideoAdEvent event, {String rewardType, int rewardAmount}) {
+      if (event == RewardedVideoAdEvent.rewarded) {
+        setState(() {
+          _actionCountLimit += 35;
+          _updateButton();
+          _buttonBarChild = Container();
+        });
+      } else if (event == RewardedVideoAdEvent.closed) {
+        setState(() {
+          _buttonsActive = false;
+        });
+        videoAd.load(adUnitId: gameAdId, targetingInfo: targetingInfo);
+      } else if (event == RewardedVideoAdEvent.loaded) {
+        setState(() {
+          _buttonsActive = true;
+        });
+        print('loaded new ad');
+      }
+    };
+    videoAd.load(adUnitId: gameAdId, targetingInfo: targetingInfo);
+
     _logCategories();
     super.initState();
   }
@@ -206,72 +305,72 @@ class _GameState extends State<Game> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xff224840),
-      body: SizedBox.expand(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Card(
-            child: ShaderMask(
-              shaderCallback: (Rect bounds) {
-                return LinearGradient(
-                        begin: Alignment.topRight,
-                        end: Alignment.bottomLeft,
-                        colors: [Colors.grey[50], Colors.grey[400]])
-                    .createShader(bounds);
+      backgroundColor: buttonColor,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            height: MediaQuery.of(context).size.height - 8,
+            child: FlatButton(
+              onPressed: () async {
+                _updateButton().whenComplete(() {
+                  setState(() {});
+                });
               },
-              blendMode: BlendMode.colorBurn,
-              child: FlatButton(
-                onPressed: () async {
-                  _updateButton().whenComplete(() {
-                    setState(() {});
-                  });
-                },
-                color: buttonColor,
-                child: Column(
-                  children: <Widget>[
-                    Container(
-                      height: 80,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(categoryType == 'own'
-                              ? ownEntry.classIcon
-                              : categoryType.isNotEmpty
-                                  ? categories
-                                      .firstWhere((cat) =>
-                                          cat.className == categoryType)
-                                      .classIcon
-                                  : null),
-                          Text(categoryType),
-                        ],
-                      ),
+              color: buttonColor,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Container(
+                    height: 80,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(categoryType == 'own'
+                            ? ownEntry.classIcon
+                            : categoryType.isNotEmpty
+                                ? categories
+                                    .firstWhere(
+                                        (cat) => cat.className == categoryType)
+                                    .classIcon
+                                : null),
+                        Text(categoryType),
+                      ],
                     ),
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          buttonText,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 30,
-                          ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        buttonText,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 30,
                         ),
                       ),
                     ),
-                    LinearProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation(Colors.black.withOpacity(0.2)),
-                      backgroundColor: Colors.black.withOpacity(0.1),
-                      value: (actionCount /
-                          (actionLineup.length > 65
-                              ? 66
-                              : actionLineup.length + 1)),
-                    ),
-                  ],
-                ),
+                  ),
+                  Container(
+                    height: 80,
+                    child: _buttonBarChild,
+                  ),
+                ],
               ),
             ),
           ),
-        ),
+          Container(
+            color: buttonColor,
+            height: 8,
+            width: MediaQuery.of(context).size.width,
+            child: LinearProgressIndicator(
+              valueColor: AlwaysStoppedAnimation(Colors.black.withOpacity(0.2)),
+              backgroundColor: Colors.black.withOpacity(0.1),
+              value: (actionCount /
+                  (actionLineup.length > _actionCountLimit
+                      ? _actionCountLimit + 1
+                      : actionLineup.length + 1)),
+            ),
+          ),
+        ],
       ),
     );
   }
